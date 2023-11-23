@@ -1,0 +1,122 @@
+#Funkcja generujaca cialo
+#WE:
+#b - licznosc ciala w bitach
+#WYJ:
+#F - cialo
+#p - liczba pierwsza
+#g - el. pierwotny
+def gen_prime(b):
+    p=random_prime(2^b-1,false, 2^(b-1))
+    print("\nZalozenia:\nWylosowana liczba pierwsza:\np =",p)
+    F=GF(p)
+    g=F.primitive_element()
+    print("\nElement pierwotny:\ng =",g)
+    return F, p, g
+
+
+#Funkcja generujaca klucze
+#WE:
+#p - liczba pierwsza
+#g - el. pierwotny
+#WYJ:
+#x - klucz prywatny
+#X - klucz publiczny
+def gen_keys(p, g):
+    #generacja prywatnego klucza x
+    x=randint(1,p-1)
+    while True:
+        if gcd(x, (p-1))==1:
+            break
+        else:
+            x=randint(1,p-1)
+    print("\nwygenerowany klucz prywatny:")
+    print("x =",x)
+
+    #generacja klucza publicznego X
+    X=g^x
+    print("\nwygenerowany klucz publiczny:")
+    print("X =", X)
+    return x, X
+
+#Funkcja generujaca podpis
+#WE:
+#F - cialo
+#m - tajemnica
+#x - klucz prywatny
+#WYJ:
+#z - podpis
+def gen_signature(F,m,x):
+    #generacja podpisu z
+    z=F(m^x)
+    print("\nGENEROWANIE PODPISU:\nK01: Podpisujacy A wyznacza podpis z pod wiadomoscia m")
+    print("z =",z)
+    return z
+
+#Funkcja weryfikujaca podpis
+#WE:
+#F - cialo
+#p - l. pierwsza
+#g - el. pierwotny
+#m - tajemnica
+#x - klucz prywatny
+#X - klucz publiczny
+#z - podpis
+def verify_signature(F,p,g,m,x,X,z):
+    #losowanie liczb a i b
+    a=randint(1, p-1)
+    b=randint(1, p-1)
+    #obliczanie wartosci c
+    c=F(m^a*g^b)
+    print("\nWERYFIKACJA PODPISU:\nK01a: uzytkownik B wybiera losowe a i b (a, b < p):")
+    print("a =",a,"\nb =",b)
+    print("K01b: nastepnie przesyla do A wynik c=F(m^a*g^b):")
+    print("c =",c)
+
+    #losowanie wartosci q
+    q=randint(1,p-1)
+    print("K02a: Uzytkownik A wybiera losowo liczbe q mniejsza od p:")
+    print("q =",q)
+    
+    #obliczanie wartosci s1, s2
+    s1=F(c*g^q)
+    s2=F((c*g^q)^x)
+    print("K02b: Uzytkownik A przesyla do B wyniki dzialan s1=cg^q (mod p) oraz s2=(cg^q)^x (mod p):")
+    print("s1 =",s1,"\ns2 =",s2)
+
+    print("K03: Uzytkownik B przesyla do uzytkownika A wartosci a i b")
+    
+    #obliczanie wartosci s1_p, s2_p
+    s1_p=F(c*g^q)
+    s2_p=F(X^(b+q)*z^a)
+    print("K04a: Uzytkownik A przeysla do B wartosc q")
+    print("K04b: Uzytkownik B oblicza wartosci s1_p=cg^q oraz s2_p=X^(b+q)*z^a")
+    print("s1_p =",s1_p,"\ns2_p =",s2_p)
+    
+    #sprawdzenie rownosci s1, s2 z s1_p, s2_p a zarazem weryfikacja podpisu
+    if(s1==s1_p and s2==s2_p):
+        print("K05: s1==s1_p i s2==s2_p - podpis jest poprawny")
+    else:
+        print("K05: s1!=s1_p i s2!=s2_p - podpis nie jest poprawny")
+
+#Funkcja wywolujaca poszczegolne kroki protokolu
+#WE:
+#m - tajemnica
+#b- licznosc ciala w bitach
+def protocol(b, m):
+    F,p,g=gen_prime(b)
+    x, X=gen_keys(p,g)
+    z=gen_signature(F,m,x)
+    verify_signature(F,p,g,m,x,X,z)
+
+    
+#Parametry wejsciowe
+#m - tajemnica
+#b- licznosc ciala w bitach
+m=randint(1,1000)
+print("Tajemnica m =", m)
+
+b=20
+print("Licznosc ciala b =", b)
+
+#Wywolanie protokolu z parametrami wejsciowymi
+protocol(b,m)
